@@ -8,26 +8,15 @@ import boto3
 LOGGER = logging.getLogger("SpotifyDataPreprocessor")
 LOGGER.setLevel(logging.DEBUG)
 
-
-def _get_track(playlist_item):
-    if "track" in playlist_item:
-        return playlist_item["track"]["name"]
-    else:
-        return playlist_item["name"]
-
-
-def _get_artist(playlist_item):
-    if "track" in playlist_item:
-        return playlist_item["track"]["artists"][0]["name"]
-    else:
-        return playlist_item["artists"][0]["name"]
-
+# TODO: refactor into classes
 
 def spotify_data_preprocessor(json_object):
+    # TODO: Make a test for this
     spotify_items = json_object['items']
     new_json = {}
+    # TODO: make a dataclass, and display this like {{'artist': , 'track': }, {},...}
     for i, item in enumerate(spotify_items):
-        new_json.update({i + 1: {_get_track(item): _get_artist(item)}})
+        new_json.update({i + 1: {item["name"]: item["artists"][0]["name"]}})
     return new_json
 
 

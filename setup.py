@@ -24,7 +24,8 @@ setuptools.setup(
         "aws-cdk.aws_lambda",
         "aws-cdk.aws_s3_notifications",
         "urllib3==1.26.6",
-        "boto3==1.18.31"
+        "boto3==1.18.31",
+        "pytest==6.2.4"
     ],
 
     python_requires=">=3.6",
