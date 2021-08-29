@@ -20,7 +20,10 @@ setuptools.setup(
 
     install_requires=[
         "aws-cdk.core==1.120.0",
-        "requests==2.25.1",
+        "aws-cdk.aws_s3",
+        "aws-cdk.aws_lambda",
+        "aws-cdk.aws_s3_notifications",
+        "urllib3==1.26.6",
         "boto3==1.18.31"
     ],
 
