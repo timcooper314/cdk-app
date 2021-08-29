@@ -9,11 +9,11 @@ from aws_cdk import core as cdk
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 
-from hello_cdk.hello_cdk_stack import HelloCdkStack
+from hello_cdk.hello_cdk_stack import ApiIngestionStack
 
 
 app = core.App()
-HelloCdkStack(app, "HelloCdkStack",
+ApiIngestionStack(app, "ApiIngestionStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
