@@ -27,8 +27,8 @@ class SpotifyDataPreprocessor:
 
     def put_to_s3_raw(self, json_object):
         datetime_now = datetime.now().strftime("%Y%m%d")
-        # TODO: partition this better
-        s3_key = f"spotify_data/top_tracks{datetime_now}.json"
+        month_now = datetime.now().strftime("%m")
+        s3_key = f"spotify/{month_now}/top_tracks{datetime_now}.json"
         self.logger.debug(f"Putting {s3_key=} into bucket {self.raw_bucket}")
         self.s3.put_object(Body=json.dumps(json_object),
                                   Key=s3_key,
