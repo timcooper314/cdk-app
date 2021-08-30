@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import pytest
 from unittest.mock import MagicMock
-from hello_cdk.spotify_preprocessor import SpotifyDataPreprocessor
+from api_ingestion.spotify_preprocessor import SpotifyDataPreprocessor
 
 
 @pytest.fixture

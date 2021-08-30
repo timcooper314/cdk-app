@@ -6,17 +6,17 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="hello_cdk",
+    name="api_ingestion",
     version="0.0.1",
 
-    description="An empty CDK Python app",
+    description="A CDK Python app",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    author="author",
+    author="TC",
 
-    package_dir={"": "hello_cdk"},
-    packages=setuptools.find_packages(where="hello_cdk"),
+    package_dir={"": "api_ingestion"},
+    packages=setuptools.find_packages(where="api_ingestion"),
 
     install_requires=[
         "aws-cdk.core==1.120.0",

@@ -15,10 +15,10 @@ class ApiIngestionStack(cdk.Stack):
         api_lambda = lambda_.Function(self, "get-api-data",
                                       runtime=lambda_.Runtime.PYTHON_3_8,
                                       handler="get_api_data.lambda_handler",
-                                      code=lambda_.Code.from_asset("./hello_cdk/"),
+                                      code=lambda_.Code.from_asset("./api_ingestion/"),
                                       environment=dict(LANDING_BUCKET_NAME=landing_bucket.bucket_name,
                                                        AUTH_TOKEN="auth_token"))
-        api_lambda_schedule = events.Schedule.rate(cdk.Duration.minutes(2))
+        api_lambda_schedule = events.Schedule.cron(minute='00', hour='18')  # .rate(cdk.Duration.days(2))
         event_lambda_target = events_targets.LambdaFunction(handler=api_lambda)
         lambda_rule = events.Rule(self,
                                   "API Lambda Schedule",
@@ -30,7 +30,7 @@ class ApiIngestionStack(cdk.Stack):
         api_data_preprocessor_lambda = lambda_.Function(self, "spotify-data-preprocessor",
                                                         runtime=lambda_.Runtime.PYTHON_3_8,
                                                         handler="spotify_preprocessor.lambda_handler",
-                                                        code=lambda_.Code.from_asset("./hello_cdk/"),
+                                                        code=lambda_.Code.from_asset("./api_ingestion/"),
                                                         environment=dict(RAW_BUCKET_NAME=raw_bucket.bucket_name))
         landing_bucket.grant_read(api_data_preprocessor_lambda)
         landing_bucket.add_object_created_notification(s3_nots.LambdaDestination(api_data_preprocessor_lambda))
