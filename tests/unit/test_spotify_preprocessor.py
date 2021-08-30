@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
 import pytest
-from hello_cdk.spotify_preprocessor import spotify_data_preprocessor
+from unittest.mock import MagicMock
+from hello_cdk.spotify_preprocessor import SpotifyDataPreprocessor
 
 
 @pytest.fixture
@@ -17,7 +18,13 @@ def expected_top_track_3():
     return {"Joke or a Lie": "Sharon Van Etten"}
 
 
-def test_should_process_raw_top_data(top_track_raw_data,
+@pytest.fixture
+def obj():
+    obj = SpotifyDataPreprocessor.__new__(SpotifyDataPreprocessor)
+    obj.s3 = MagicMock()
+
+
+def test_should_process_raw_top_data(obj, top_track_raw_data,
                                      expected_top_track_3):
-    processed_json = spotify_data_preprocessor(top_track_raw_data)
+    processed_json = SpotifyDataPreprocessor().process_top_data(top_track_raw_data)
     assert processed_json[3] == expected_top_track_3
