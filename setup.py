@@ -23,6 +23,8 @@ setuptools.setup(
         "aws-cdk.aws_s3",
         "aws-cdk.aws_lambda",
         "aws-cdk.aws_s3_notifications",
+        "aws-cdk.aws_events",
+        "aws-cdk.aws_events_targets",
         "urllib3==1.26.6",
         "boto3==1.18.31",
         "pytest==6.2.4"
