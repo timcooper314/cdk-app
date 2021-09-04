@@ -25,6 +25,8 @@ class SpotifyApiIngestion:
         self.logger.setLevel(logging.DEBUG)
         self.landing_bucket = os.getenv("LANDING_BUCKET_NAME")
         self.s3_bucket = boto3.resource('s3').Bucket(self.landing_bucket)
+        self.secret_manager = boto3.client('secretsmanager')
+        self.secret_name = "test/spotify/auth_token"
 
     def _put_to_s3_landing(self, json_object):
         datetime_now = datetime.now().strftime("%Y%m%d")
@@ -40,7 +42,9 @@ class SpotifyApiIngestion:
         params = {"time_range": "short_term",
                   "limit": 10,
                   "offset": 0}
-        auth_token = os.getenv("AUTH_TOKEN")
+        auth_token = secret_manager.get_secret_value(
+            SecretId=self.secret_name
+        )  # "BQDx0Q0gy86jPdAeESB2rqjLS3VfUH1pPTPjoSKnVMdVdI8ipquDksZDvUVl5ODdj9YYd9ulBzQVVENcmzoYS2--_5JEcOtuWaeXIRCy91L1pBHbEjjiZho8xidfjUwWUkcksy3VtQUmg2JGY9zq3ztiCmlU6Eeah5yl2mJFZkvznBWsYRwQ5gff7dDL0JcwOgeRA8i9Vxnvxg3noRXfgu71faHpyBSwFQQAwHIuI58w958TUE6Ln8K07w"  # os.getenv("AUTH_TOKEN")
         headers = {"Authorization": f"Bearer {auth_token}"}
         http = urllib3.PoolManager()
         self.logger.debug("Getting API data...")
