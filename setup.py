@@ -25,6 +25,7 @@ setuptools.setup(
         "aws-cdk.aws_s3_notifications",
         "aws-cdk.aws_events",
         "aws-cdk.aws_events_targets",
+        "aws-cdk.aws_secretsmanager",
         "urllib3==1.26.6",
         "boto3==1.18.31",
         "pytest==6.2.4"
