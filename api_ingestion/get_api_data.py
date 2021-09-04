@@ -42,9 +42,11 @@ class SpotifyApiIngestion:
         params = {"time_range": "short_term",
                   "limit": 10,
                   "offset": 0}
-        auth_token = secret_manager.get_secret_value(
+        self.logger.debug("Getting auth token from secrets manager...")
+        secret_obj = self.secret_manager.get_secret_value(
             SecretId=self.secret_name
-        )  # "BQDx0Q0gy86jPdAeESB2rqjLS3VfUH1pPTPjoSKnVMdVdI8ipquDksZDvUVl5ODdj9YYd9ulBzQVVENcmzoYS2--_5JEcOtuWaeXIRCy91L1pBHbEjjiZho8xidfjUwWUkcksy3VtQUmg2JGY9zq3ztiCmlU6Eeah5yl2mJFZkvznBWsYRwQ5gff7dDL0JcwOgeRA8i9Vxnvxg3noRXfgu71faHpyBSwFQQAwHIuI58w958TUE6Ln8K07w"  # os.getenv("AUTH_TOKEN")
+        )
+        auth_token = json.loads(secret_obj["SecretString"])["SPOTIFY_AUTH_TOKEN"]
         headers = {"Authorization": f"Bearer {auth_token}"}
         http = urllib3.PoolManager()
         self.logger.debug("Getting API data...")

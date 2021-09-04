@@ -4,6 +4,7 @@ from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_s3_notifications as s3_nots
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as events_targets
+from aws_cdk import aws_secretsmanager as secretsmanager
 
 
 class ApiIngestionStack(cdk.Stack):
@@ -25,6 +26,10 @@ class ApiIngestionStack(cdk.Stack):
                                   enabled=True,
                                   schedule=api_lambda_schedule,
                                   targets=[event_lambda_target])
+        secret = secretsmanager.Secret.from_secret_attributes(self, "test/spotify/auth_token",
+          secret_complete_arn="arn:aws:secretsmanager:ap-southeast-2:158795226448:secret:test/spotify/auth_token-nn3b6q")
+        # secret = secretsmanager.Secret(self, "test/spotify/auth_token")
+        secret.grant_read(api_lambda)
         landing_bucket.grant_write(api_lambda)
         raw_bucket = s3.Bucket(self, "raw-data")
         api_data_preprocessor_lambda = lambda_.Function(self, "spotify-data-preprocessor",
