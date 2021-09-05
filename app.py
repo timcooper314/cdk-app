@@ -4,18 +4,15 @@ import os
 from aws_cdk import core as cdk
 
 from api_ingestion.api_ingestion_stack import ApiIngestionStack
-
+from data_lake.data_lake_stack import DataLakeStack
 
 app = cdk.App()
-ApiIngestionStack(app, "ApiIngestionStack",
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
 
-    # Specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
+prod = cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION'))
 
-    env=cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
-    )
+dl_stack = DataLakeStack(app, "DataLakeStack", env=prod)
+ingestion_stack = ApiIngestionStack(app, "ApiIngestionStack",
+                                    raw_bucket = dl_stack.raw_bucket,
+                                    env=prod)
 
 app.synth()
