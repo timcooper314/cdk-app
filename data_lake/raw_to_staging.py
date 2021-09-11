@@ -14,10 +14,14 @@ class RawToStaging:
         self.s3 = boto3.client('s3')
 
     def copy_file_to_staged(self, key, bucket):
-        self.logger.debug("Copying file with {key=}...")
+        self.logger.debug(f"Copying file with {key=} from {bucket} to {self.staging_bucket}...")
         self.s3.copy({"Bucket": bucket, "Key": key},
                      self.staging_bucket,
                      key)
+
+    def delete_file_from_raw(self, key, bucket):
+        self.logger.debug(f"Deleting file with {key=} from {bucket}...")
+        self.s3.delete_object(Key=key, Bucket=bucket)
 
     def raw_to_staging(self, sqs_event):
         """Takes sqs event as input"""
@@ -27,6 +31,7 @@ class RawToStaging:
                 bucket = record["s3"]["bucket"]["name"]
                 key = urllib.parse.unquote_plus(record["s3"]["object"]["key"], encoding="UTF-8")
                 self.copy_file_to_staged(key, bucket)
+                self.delete_file_from_raw(key, bucket)
         self.logger.info("Finished lambda execution.")
         return "SUCCESS"
 

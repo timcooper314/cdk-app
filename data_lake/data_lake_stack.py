@@ -31,3 +31,4 @@ class DataLakeStack(cdk.Stack):
         # TODO: improve key partitioning in staging
         # TODO: dynamodb table
         # TODO: state machine? glue ?
+        # idea: React.js front end for viewing staged spotify data, sql filtering, etc
