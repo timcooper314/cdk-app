@@ -6,3 +6,8 @@ setup:
 	echo 'Dev dependencies installed.'
 	echo 'Run "$ cdk synth" to create cfn template.'
 	echo 'Run "$ cdk deploy --all" to deploy stacks.'
+
+deploy:
+	cdk synth
+	cdk deploy --all
+	python ./data_lake/data_contracts/put_data_contracts.py

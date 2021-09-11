@@ -28,6 +28,7 @@ setuptools.setup(
         "aws-cdk.aws_secretsmanager",
         "aws-cdk.aws_sqs",
         "aws_cdk.aws_lambda_event_sources",
+        "aws_cdk.aws_dynamodb",
         "urllib3==1.26.6",
         "boto3==1.18.31",
         "pytest==6.2.4"
