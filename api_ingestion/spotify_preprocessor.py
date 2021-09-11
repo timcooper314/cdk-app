@@ -25,14 +25,14 @@ class SpotifyDataPreprocessor:
         return new_json
 
 
-    def put_to_s3_raw(self, json_object):
-        datetime_now = datetime.now().strftime("%Y%m%d")
-        month_now = datetime.now().strftime("%m")
-        s3_key = f"spotify/{month_now}/top_tracks{datetime_now}.json"
+    def put_to_s3_raw(self, s3_key, json_object):
+        datetime_str = s3_key.split('.')[-2][-8:]  # datetime.now().strftime("%Y%m%d")
+        month_str = datetime_str[4:6]  #datetime.now().strftime("%m")
+        s3_key = f"spotify/{month_str}/top_tracks{datetime_str}.json"
         self.logger.debug(f"Putting {s3_key=} into bucket {self.raw_bucket}")
         self.s3.put_object(Body=json.dumps(json_object),
-                                  Key=s3_key,
-                                  Bucket=self.raw_bucket)
+                           Key=s3_key,
+                           Bucket=self.raw_bucket)
         return
 
     def get_landing_data(self, key, bucket):
@@ -47,7 +47,7 @@ class SpotifyDataPreprocessor:
         bucket = urllib.parse.unquote_plus(event['Records'][0]['s3']['bucket']['name'], encoding='utf-8')
         landing_json = self.get_landing_data(s3_key, bucket)
         processed_json = self.process_top_data(landing_json)
-        self.put_to_s3_raw(processed_json)
+        self.put_to_s3_raw(s3_key, processed_json)
         self.logger.info("Finished lambda execution.")
         return "SUCCESS"
 

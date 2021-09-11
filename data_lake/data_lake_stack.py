@@ -26,6 +26,7 @@ class DataLakeStack(cdk.Stack):
         staging_lambda.add_event_source(SqsEventSource(raw_queue))
 
         self.raw_bucket.grant_read(staging_lambda)
+        self.raw_bucket.grant_delete(staging_lambda)
         staging_bucket.grant_write(staging_lambda)
 
         # TODO: improve key partitioning in staging
