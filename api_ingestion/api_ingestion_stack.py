@@ -25,6 +25,7 @@ class ApiIngestionStack(cdk.Stack):
                                   enabled=True,
                                   schedule=api_lambda_schedule,
                                   targets=[event_lambda_target])
+        # Auth token must be manually saved in secrets manager
         secret = secretsmanager.Secret.from_secret_attributes(self, "test/spotify/auth_token",
           secret_complete_arn="arn:aws:secretsmanager:ap-southeast-2:158795226448:secret:test/spotify/auth_token-nn3b6q")
         secret.grant_read(api_lambda)

@@ -12,7 +12,7 @@ prod = cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.geten
 
 dl_stack = DataLakeStack(app, "DataLakeStack", env=prod)
 ingestion_stack = ApiIngestionStack(app, "ApiIngestionStack",
-                                    raw_bucket = dl_stack.raw_bucket,
+                                    raw_bucket=dl_stack.raw_bucket,
                                     env=prod)
 
 app.synth()

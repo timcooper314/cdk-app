@@ -8,6 +8,8 @@ setup:
 	echo 'Run "$ cdk deploy --all" to deploy stacks.'
 
 deploy:
+	black data_lake/
 	cdk synth
 	cdk deploy --all
+	echo "Adding data contracts to dynamodb table..."
 	python ./data_lake/data_contracts/put_data_contracts.py
