@@ -1,0 +1,6 @@
+[
+  {"endpoint": "tracks",
+  "s3_filename":  "top_tracks"},
+  {"endpoint": "artists",
+  "s3_filename":  "top_artists"}
+]
