@@ -24,47 +24,42 @@ class SpotifyApiIngestion:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG)
         self.landing_bucket = os.getenv("LANDING_BUCKET_NAME")
-        self.s3_bucket = boto3.resource('s3').Bucket(self.landing_bucket)
-        self.secret_manager = boto3.client('secretsmanager')
+        self.s3_bucket = boto3.resource("s3").Bucket(self.landing_bucket)
+        self.secret_manager = boto3.client("secretsmanager")
         self.secret_name = "test/spotify/auth_token"
 
-    def _put_to_s3_landing(self, json_object):
+    def _put_to_s3_landing(self, json_object, endpoint):
         datetime_now = datetime.now().strftime("%Y%m%d")
-        s3_key = f"spotify/top_tracks{datetime_now}.json"
+        s3_key = f"spotify/{endpoint}/top_{endpoint}{datetime_now}.json"
         self.logger.debug(f"Putting {s3_key=} into bucket {self.landing_bucket}")
-        self.s3_bucket.put_object(Key=s3_key,
-                                  Body=json.dumps(json_object))
+        self.s3_bucket.put_object(Key=s3_key, Body=json.dumps(json_object))
         return
 
-    def _get_api_data(self):
+    def _get_api_data(self, endpoint):
         base_url = "https://api.spotify.com/v1/"
-        endpoint = f"me/top/tracks"
-        params = {"time_range": "short_term",
-                  "limit": 10,
-                  "offset": 0}
+        url_endpoint = f"me/top/{endpoint}"
+        params = {"time_range": "short_term", "limit": 10, "offset": 0}
         self.logger.debug("Getting auth token from secrets manager...")
-        secret_obj = self.secret_manager.get_secret_value(
-            SecretId=self.secret_name
-        )
+        secret_obj = self.secret_manager.get_secret_value(SecretId=self.secret_name)
         auth_token = json.loads(secret_obj["SecretString"])["SPOTIFY_AUTH_TOKEN"]
         headers = {"Authorization": f"Bearer {auth_token}"}
         http = urllib3.PoolManager()
-        self.logger.debug("Getting API data...")
-        response = http.request('GET',
-                                f"{base_url}{endpoint}",
-                                headers=headers,
-                                fields=params)
-        json_response = json.loads(response.data.decode('utf8'))
+        self.logger.debug(f"Getting API data for {endpoint=}...")
+        response = http.request(
+            "GET", f"{base_url}{url_endpoint}", headers=headers, fields=params
+        )
+        json_response = json.loads(response.data.decode("utf8"))
         _check_api_response(json_response)
         return json_response
 
-    def get_top_tracks_data(self):
+    def get_top_data(self, event):
         self.logger.info("Starting lambda execution...")
-        json_response = self._get_api_data()
-        self._put_to_s3_landing(json_response)
+        endpoint = event.get("endpoint", "tracks")
+        json_response = self._get_api_data(endpoint)
+        self._put_to_s3_landing(json_response, endpoint)
         self.logger.info("Finished lambda execution.")
         return "SUCCESS"
 
 
 def lambda_handler(event, context):
-    return SpotifyApiIngestion().get_top_tracks_data()
+    return SpotifyApiIngestion().get_top_data(event)
