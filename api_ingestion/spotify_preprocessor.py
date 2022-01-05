@@ -40,10 +40,10 @@ class SpotifyDataPreprocessor:
         self.api_details_table = os.getenv("API_DETAILS_TABLE")
         self.dynamodb = boto3.resource("dynamodb")
 
-    def _put_to_s3_raw(self, json_object, filename):
+    def _put_to_s3_raw(self, json_object, endpoint, filename):
         datetime_now = datetime.now().strftime("%Y%m%d")
         month_now = datetime.now().strftime("%m")
-        s3_key = f"spotify/{month_now}/{filename}{datetime_now}.json"
+        s3_key = f"spotify/{endpoint}/{month_now}/{filename}{datetime_now}.json"
         self.logger.debug(f"Putting {s3_key=} into bucket {self.raw_bucket}")
         self.s3.put_object(
             Body=json.dumps(json_object), Key=s3_key, Bucket=self.raw_bucket
@@ -76,7 +76,7 @@ class SpotifyDataPreprocessor:
         filename = preprocessing_details["s3_filename"]
 
         processed_json = _process_top_data(landing_json, preprocessing_details)
-        self._put_to_s3_raw(processed_json, filename)
+        self._put_to_s3_raw(processed_json, endpoint, filename)
         self.logger.info("Finished lambda execution.")
         return "SUCCESS"
 

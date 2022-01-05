@@ -59,7 +59,18 @@ class ApiIngestionStack(cdk.Stack):
         # secret = secretsmanager.Secret(self, "test/spotify/auth_token")
         secret.grant_read(api_lambda)
         landing_bucket.grant_write(api_lambda)
-        raw_bucket = s3.Bucket(self, "raw-data")
+        raw_bucket = s3.Bucket(
+            self,
+            "raw-data",
+            cors=[
+                s3.CorsRule(
+                    allowed_methods=[s3.HttpMethods.GET],
+                    allowed_origins=["*"],
+                    allowed_headers=["*"],
+                    max_age=3000,
+                )
+            ],
+        )
         api_data_preprocessor_lambda = lambda_.Function(
             self,
             "spotify-data-preprocessor",
