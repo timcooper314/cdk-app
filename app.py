@@ -6,7 +6,7 @@ from api_ingestion.lib.upload_api_configs import upload_api_configs_to_dynamodb
 
 
 app = cdk.App()
-ingestion_stack = ApiIngestionStack(
+ApiIngestionStack(
     app,
     "ApiIngestionStack",
     env=cdk.Environment(
@@ -15,5 +15,5 @@ ingestion_stack = ApiIngestionStack(
 )
 
 app.synth()
-upload_api_configs_to_dynamodb()
 
+# upload_api_configs_to_dynamodb()

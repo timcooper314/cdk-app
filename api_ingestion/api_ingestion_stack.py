@@ -15,7 +15,12 @@ class ApiIngestionStack(cdk.Stack):
         landing_bucket = s3.Bucket(self, "landing-data")
 
         api_details_table = dynamodb.Table(
-            self, table_name="api-details", partition_key="endpoint"
+            self,
+            id="dynamodb-table",
+            table_name="api-details",
+            partition_key=dynamodb.Attribute(
+                name="endpoint", type=dynamodb.AttributeType.STRING
+            ),
         )
 
         api_lambda = lambda_.Function(
@@ -32,10 +37,12 @@ class ApiIngestionStack(cdk.Stack):
             minute="00", hour="18"
         )  # .rate(cdk.Duration.days(2))
         event_lambda_tracks_target = events_targets.LambdaFunction(
-            handler=api_lambda, event={"endpoint": "tracks"}
+            handler=api_lambda,
+            event=events.RuleTargetInput.from_object({"endpoint": "tracks"}),
         )
         event_lambda_artists_target = events_targets.LambdaFunction(
-            handler=api_lambda, event={"endpoint": "artists"}
+            handler=api_lambda,
+            event=events.RuleTargetInput.from_object({"endpoint": "artists"}),
         )
         lambda_rule = events.Rule(
             self,
