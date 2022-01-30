@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import logging
 import urllib.parse
@@ -11,9 +10,14 @@ LOGGER.setLevel(logging.DEBUG)
 
 
 def _get_endpoint_from_key(key):
-    filename = key.split("/")[-1]
-    endpoint_key = re.findall("[a-zA-z]+", filename)[0]
-    return endpoint_key.split("_")[-1]
+    return key.split("/")[1]
+
+
+def _create_s3_key(landing_key, s3_key_format):
+    filename = landing_key.split("_")[-1]
+    dt_str = filename.split(".")[0]
+    datetime_obj = datetime.strptime(dt_str, "%Y%m%d")
+    return datetime_obj.strftime(s3_key_format)
 
 
 def _process_top_data(json_object: dict, processing_details: dict) -> dict:
@@ -40,9 +44,7 @@ class SpotifyDataPreprocessor:
         self.api_details_table = os.getenv("API_DETAILS_TABLE")
         self.dynamodb = boto3.resource("dynamodb")
 
-    def _put_to_s3_raw(self, json_object, s3_key_format):
-        datetime_now = datetime.now()
-        s3_key = datetime_now.strftime(s3_key_format)
+    def _put_to_s3_raw(self, json_object, s3_key):
         self.logger.debug(f"Putting {s3_key=} into bucket {self.raw_bucket}")
         self.s3.put_object(
             Body=json.dumps(json_object), Key=s3_key, Bucket=self.raw_bucket
@@ -56,26 +58,30 @@ class SpotifyDataPreprocessor:
 
     def _get_api_details(self, endpoint: str) -> dict:
         api_table = self.dynamodb.Table(self.api_details_table)
+        self.logger.debug(
+            f"Retrieving details for {endpoint} in table {self.api_details_table}..."
+        )
         return api_table.get_item(
             Key={"endpoint": endpoint},
         )["Item"]
 
     def start_preprocessing(self, event):
         self.logger.info("Starting lambda execution...")
-        s3_key = urllib.parse.unquote_plus(
+        landing_s3_key = urllib.parse.unquote_plus(
             event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
         )
         bucket = urllib.parse.unquote_plus(
             event["Records"][0]["s3"]["bucket"]["name"], encoding="utf-8"
         )
-        endpoint = _get_endpoint_from_key(s3_key)
+        self.logger.debug(f"Processing event for {landing_s3_key=} in {bucket=}...")
+        endpoint = _get_endpoint_from_key(landing_s3_key)
         preprocessing_details = self._get_api_details(endpoint)
         s3_key_format = preprocessing_details["s3_key_format"]
 
-        landing_json = self._get_landing_data(s3_key, bucket)
+        landing_json = self._get_landing_data(landing_s3_key, bucket)
         processed_json = _process_top_data(landing_json, preprocessing_details)
-
-        self._put_to_s3_raw(processed_json, s3_key_format)
+        raw_s3_key = _create_s3_key(landing_s3_key, s3_key_format)
+        self._put_to_s3_raw(processed_json, raw_s3_key)
         self.logger.info("Finished lambda execution.")
         return "SUCCESS"
 

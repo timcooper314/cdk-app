@@ -30,7 +30,7 @@ class SpotifyApiIngestion:
 
     def _put_to_s3_landing(self, json_object, endpoint):
         datetime_now = datetime.now().strftime("%Y%m%d")
-        s3_key = f"spotify/{endpoint}/top_{endpoint}{datetime_now}.json"
+        s3_key = f"spotify/{endpoint}/top_{endpoint}_{datetime_now}.json"
         self.logger.debug(f"Putting {s3_key=} into bucket {self.landing_bucket}")
         self.s3_bucket.put_object(Key=s3_key, Body=json.dumps(json_object))
         return
