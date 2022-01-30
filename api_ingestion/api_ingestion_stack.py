@@ -9,28 +9,41 @@ from aws_cdk import aws_secretsmanager as secretsmanager
 
 
 class ApiIngestionStack(cdk.Stack):
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: cdk.Construct,
+        construct_id: str,
+        stage: str,
+        component: str,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        landing_bucket = s3.Bucket(self, "landing-data")
+        landing_bucket = s3.Bucket(
+            self, "landing-data", bucket_name=f"{stage}-{component}-landing-data"
+        )
 
         api_details_table = dynamodb.Table(
             self,
-            id="dynamodb-table",
-            table_name="api-details",
+            "api-details-table",
+            table_name=f"{stage}-{component}-api-details",
             partition_key=dynamodb.Attribute(
                 name="endpoint", type=dynamodb.AttributeType.STRING
             ),
         )
 
+        secret = secretsmanager.Secret(self, f"{stage}/{component}/auth_token")
+
         api_lambda = lambda_.Function(
             self,
             "get-api-data",
+            function_name=f"{stage}-{component}-ingestion",
             runtime=lambda_.Runtime.PYTHON_3_8,
             handler="get_api_data.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/"),
             environment=dict(
-                LANDING_BUCKET_NAME=landing_bucket.bucket_name, AUTH_TOKEN="auth_token"
+                LANDING_BUCKET_NAME=landing_bucket.bucket_name,
+                API_SECRET_NAME=secret.secret_name,
             ),
         )
         api_lambda_schedule = events.Schedule.cron(
@@ -51,17 +64,13 @@ class ApiIngestionStack(cdk.Stack):
             schedule=api_lambda_schedule,
             targets=[event_lambda_tracks_target, event_lambda_artists_target],
         )
-        secret = secretsmanager.Secret.from_secret_attributes(
-            self,
-            "test/spotify/auth_token",
-            secret_complete_arn="arn:aws:secretsmanager:ap-southeast-2:158795226448:secret:test/spotify/auth_token-nn3b6q",
-        )
-        # secret = secretsmanager.Secret(self, "test/spotify/auth_token")
+
         secret.grant_read(api_lambda)
         landing_bucket.grant_write(api_lambda)
         raw_bucket = s3.Bucket(
             self,
             "raw-data",
+            bucket_name=f"{stage}-{component}-raw-data",
             cors=[
                 s3.CorsRule(
                     allowed_methods=[s3.HttpMethods.GET],
@@ -74,6 +83,7 @@ class ApiIngestionStack(cdk.Stack):
         api_data_preprocessor_lambda = lambda_.Function(
             self,
             "spotify-data-preprocessor",
+            function_name=f"{stage}-{component}-preprocessor",
             runtime=lambda_.Runtime.PYTHON_3_8,
             handler="spotify_preprocessor.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/"),
@@ -88,3 +98,7 @@ class ApiIngestionStack(cdk.Stack):
         )
         raw_bucket.grant_write(api_data_preprocessor_lambda)
         api_details_table.grant_read_data(api_data_preprocessor_lambda)
+
+        cdk.CfnOutput(
+            self, "dev-api-ingestion-raw-bucket-name", value=raw_bucket.bucket_name
+        )
