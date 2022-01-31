@@ -100,5 +100,16 @@ class ApiIngestionStack(cdk.Stack):
         api_details_table.grant_read_data(api_data_preprocessor_lambda)
 
         cdk.CfnOutput(
-            self, "dev-api-ingestion-raw-bucket-name", value=raw_bucket.bucket_name
+            self,
+            "dev-api-ingestion-raw-bucket-name",
+            value=raw_bucket.bucket_name,
+            description="The name of the S3 raw bucket.",
+            export_name="dev-api-ingestion-raw-bucket-name",
+        )
+        cdk.CfnOutput(
+            self,
+            "dev-api-ingestion-raw-bucket-arn",
+            value=raw_bucket.bucket_arn,
+            description="The ARN of the S3 raw bucket.",
+            export_name="dev-api-ingestion-raw-bucket-arn",
         )
