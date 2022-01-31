@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import pytest
 from unittest.mock import MagicMock
-from api_ingestion.spotify_preprocessor import SpotifyDataPreprocessor
+from api_ingestion.spotify_preprocessor import _process_top_data
 
 
 @pytest.fixture
@@ -19,12 +19,15 @@ def expected_top_track_3():
 
 
 @pytest.fixture
-def obj():
-    obj = SpotifyDataPreprocessor.__new__(SpotifyDataPreprocessor)
-    obj.s3 = MagicMock()
+def tracks_endpoint_details():
+    return {
+        "endpoint": "tracks",
+        "s3_key_format": "spotify/tracks/%Y/%m/top_tracks%Y%m%d.json",
+    }
 
 
-def test_should_process_raw_top_data(obj, top_track_raw_data,
-                                     expected_top_track_3):
-    processed_json = SpotifyDataPreprocessor().process_top_data(top_track_raw_data)
+def test_should_process_raw_top_data(
+    top_track_raw_data, tracks_endpoint_details, expected_top_track_3
+):
+    processed_json = _process_top_data(top_track_raw_data, tracks_endpoint_details)
     assert processed_json[3] == expected_top_track_3

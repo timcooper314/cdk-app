@@ -2,18 +2,19 @@
 import os
 from aws_cdk import core as cdk
 from api_ingestion.api_ingestion_stack import ApiIngestionStack
-from api_ingestion.lib.upload_api_configs import upload_api_configs_to_dynamodb
 
+STAGE = "dev"
 
 app = cdk.App()
+dev = cdk.Environment(
+    account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
+)
 ApiIngestionStack(
     app,
-    "ApiIngestionStack",
-    env=cdk.Environment(
-        account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")
-    ),
+    f"{STAGE}-spotify-api-ingestion",
+    env=dev,
+    stage=STAGE,
+    component="spotify",
 )
 
 app.synth()
-
-# upload_api_configs_to_dynamodb()
