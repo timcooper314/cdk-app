@@ -1,3 +1,5 @@
+import json
+from typing import List
 from aws_cdk import core as cdk
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_dynamodb as dynamodb
@@ -6,6 +8,14 @@ from aws_cdk import aws_s3_notifications as s3_nots
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as events_targets
 from aws_cdk import aws_secretsmanager as secretsmanager
+from aws_cdk import aws_sqs as sqs
+from aws_cdk import aws_lambda_event_sources as lambda_event_sources
+
+
+def load_api_config() -> List:
+    with open("./api_ingestion/lib/api_config.json", "r") as api_config_file:
+        api_config_list = json.load(api_config_file)
+    return api_config_list
 
 
 class ApiIngestionStack(cdk.Stack):
@@ -19,7 +29,7 @@ class ApiIngestionStack(cdk.Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        landing_bucket = s3.Bucket(
+        self.landing_bucket = s3.Bucket(
             self, "landing-data", bucket_name=f"{stage}-{component}-landing-data"
         )
 
@@ -42,7 +52,7 @@ class ApiIngestionStack(cdk.Stack):
             handler="get_api_data.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/"),
             environment=dict(
-                LANDING_BUCKET_NAME=landing_bucket.bucket_name,
+                LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
                 API_SECRET_NAME=secret.secret_name,
             ),
         )
@@ -63,10 +73,11 @@ class ApiIngestionStack(cdk.Stack):
             enabled=True,
             schedule=api_lambda_schedule,
             targets=[event_lambda_tracks_target, event_lambda_artists_target],
+            # TODO: Make a method to create this targets list based on the api configs
         )
 
         secret.grant_read(api_lambda)
-        landing_bucket.grant_write(api_lambda)
+        self.landing_bucket.grant_write(api_lambda)
         raw_bucket = s3.Bucket(
             self,
             "raw-data",
@@ -80,6 +91,22 @@ class ApiIngestionStack(cdk.Stack):
                 )
             ],
         )
+        landing_dlq = sqs.Queue(
+            self,
+            "landing-dlq",
+            queue_name=f"{stage}-{component}-landing-dead-letter-queue",
+        )
+        self.landing_queue = sqs.Queue(
+            self,
+            "landing-queue",
+            queue_name=f"{stage}-{component}-landing-queue",
+            dead_letter_queue=sqs.DeadLetterQueue(
+                queue=landing_dlq, max_receive_count=2
+            ),
+        )
+
+        self._add_s3_landing_events_to_queue()
+
         api_data_preprocessor_lambda = lambda_.Function(
             self,
             "spotify-data-preprocessor",
@@ -92,10 +119,11 @@ class ApiIngestionStack(cdk.Stack):
                 API_DETAILS_TABLE=api_details_table.table_name,
             ),
         )
-        landing_bucket.grant_read(api_data_preprocessor_lambda)
-        landing_bucket.add_object_created_notification(
-            s3_nots.LambdaDestination(api_data_preprocessor_lambda)
+
+        api_data_preprocessor_lambda.add_event_source(
+            lambda_event_sources.SqsEventSource(self.landing_queue)
         )
+        self.landing_bucket.grant_read(api_data_preprocessor_lambda)
         raw_bucket.grant_write(api_data_preprocessor_lambda)
         api_details_table.grant_read_data(api_data_preprocessor_lambda)
 
@@ -113,3 +141,17 @@ class ApiIngestionStack(cdk.Stack):
             description="The ARN of the S3 raw bucket.",
             export_name="dev-api-ingestion-raw-bucket-arn",
         )
+
+    def _add_s3_landing_events_to_queue(self):
+        """Reads the api configs dynamoDB items, to create S3 event filters,
+        based on the provided prefix and suffix for S3 landing keys"""
+        api_configs_list = load_api_config()
+        for api_config in api_configs_list:
+            self.landing_bucket.add_event_notification(
+                s3.EventType.OBJECT_CREATED,
+                s3_nots.SqsDestination(self.landing_queue),
+                s3.NotificationKeyFilter(
+                    prefix=api_config["landing_s3_prefix"],
+                    suffix=api_config["landing_s3_suffix"],
+                ),
+            )

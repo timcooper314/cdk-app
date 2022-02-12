@@ -67,21 +67,26 @@ class SpotifyDataPreprocessor:
 
     def start_preprocessing(self, event):
         self.logger.info("Starting lambda execution...")
-        landing_s3_key = urllib.parse.unquote_plus(
-            event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
-        )
-        bucket = urllib.parse.unquote_plus(
-            event["Records"][0]["s3"]["bucket"]["name"], encoding="utf-8"
-        )
-        self.logger.debug(f"Processing event for {landing_s3_key=} in {bucket=}...")
-        endpoint = _get_endpoint_from_key(landing_s3_key)
-        preprocessing_details = self._get_api_details(endpoint)
-        s3_key_format = preprocessing_details["s3_key_format"]
+        for sqs_record in event["Records"]:
+            records = json.loads(sqs_record["body"])["Records"]
+            for s3_landing_record in records:
+                landing_s3_key = urllib.parse.unquote_plus(
+                    s3_landing_record["s3"]["object"]["key"], encoding="utf-8"
+                )
+                landing_bucket = s3_landing_record["s3"]["bucket"]["name"]
 
-        landing_json = self._get_landing_data(landing_s3_key, bucket)
-        processed_json = _process_top_data(landing_json, preprocessing_details)
-        raw_s3_key = _create_s3_key(landing_s3_key, s3_key_format)
-        self._put_to_s3_raw(processed_json, raw_s3_key)
+                self.logger.debug(
+                    f"Processing event for {landing_s3_key=} in {landing_bucket=}..."
+                )
+                endpoint = _get_endpoint_from_key(landing_s3_key)
+                preprocessing_details = self._get_api_details(endpoint)
+                s3_key_format = preprocessing_details["s3_key_format"]
+
+                landing_json = self._get_landing_data(landing_s3_key, landing_bucket)
+                processed_json = _process_top_data(landing_json, preprocessing_details)
+                raw_s3_key = _create_s3_key(landing_s3_key, s3_key_format)
+                self._put_to_s3_raw(processed_json, raw_s3_key)
+
         self.logger.info("Finished lambda execution.")
         return "SUCCESS"
 

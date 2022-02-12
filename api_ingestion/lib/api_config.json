@@ -1,10 +1,14 @@
 [
   {
     "endpoint": "tracks",
+    "landing_s3_prefix": "spotify/tracks/",
+    "landing_s3_suffix": ".json",
     "s3_key_format": "spotify/tracks/%Y/%m/top_tracks_%Y%m%d.json"
   },
   {
     "endpoint": "artists",
+    "landing_s3_prefix": "spotify/artists/",
+    "landing_s3_suffix": ".json",
     "s3_key_format": "spotify/artists/%Y/%m/top_artists_%Y%m%d.json"
   }
 ]
