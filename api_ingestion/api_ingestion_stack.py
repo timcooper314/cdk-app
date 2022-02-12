@@ -6,6 +6,8 @@ from aws_cdk import aws_s3_notifications as s3_nots
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as events_targets
 from aws_cdk import aws_secretsmanager as secretsmanager
+from aws_cdk import aws_sqs as sqs
+from aws_cdk import aws_lambda_event_sources as lambda_event_sources
 
 
 class ApiIngestionStack(cdk.Stack):
@@ -80,6 +82,25 @@ class ApiIngestionStack(cdk.Stack):
                 )
             ],
         )
+        landing_dlq = sqs.Queue(
+            self,
+            "landing-dlq",
+            queue_name=f"{stage}-{component}-landing-dead-letter-queue",
+        )
+        landing_queue = sqs.Queue(
+            self,
+            "landing-queue",
+            queue_name=f"{stage}-{component}-landing-queue",
+            dead_letter_queue=sqs.DeadLetterQueue(
+                queue=landing_dlq, max_receive_count=2
+            ),
+        )
+
+        landing_bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            s3_nots.SqsDestination(landing_queue),
+            {"prefix": "spotify/", "suffix": ".json"},
+        )
         api_data_preprocessor_lambda = lambda_.Function(
             self,
             "spotify-data-preprocessor",
@@ -92,10 +113,10 @@ class ApiIngestionStack(cdk.Stack):
                 API_DETAILS_TABLE=api_details_table.table_name,
             ),
         )
+        queue_event_source = lambda_event_sources.SqsEventSource(landing_queue)
+        api_data_preprocessor_lambda.add_event_source(queue_event_source)
+
         landing_bucket.grant_read(api_data_preprocessor_lambda)
-        landing_bucket.add_object_created_notification(
-            s3_nots.LambdaDestination(api_data_preprocessor_lambda)
-        )
         raw_bucket.grant_write(api_data_preprocessor_lambda)
         api_details_table.grant_read_data(api_data_preprocessor_lambda)
 
