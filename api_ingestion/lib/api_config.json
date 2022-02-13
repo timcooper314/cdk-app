@@ -1,14 +1,38 @@
 [
   {
-    "endpoint": "tracks",
-    "landing_s3_prefix": "spotify/tracks/",
+    "endpoint": "tracks/short_term",
+    "landing_s3_prefix": "spotify/tracks/short_term/",
     "landing_s3_suffix": ".json",
-    "s3_key_format": "spotify/tracks/%Y/%m/top_tracks_%Y%m%d.json"
+    "s3_key_format": "spotify/tracks/short_term/%Y/%m/top_tracks_short_term_%Y%m%d.json"
   },
   {
-    "endpoint": "artists",
-    "landing_s3_prefix": "spotify/artists/",
+    "endpoint": "tracks/medium_term",
+    "landing_s3_prefix": "spotify/tracks/medium_term/",
     "landing_s3_suffix": ".json",
-    "s3_key_format": "spotify/artists/%Y/%m/top_artists_%Y%m%d.json"
+    "s3_key_format": "spotify/tracks/medium_term/%Y/%m/top_tracks_medium_term_%Y%m%d.json"
+  },
+  {
+    "endpoint": "tracks/long_term",
+    "landing_s3_prefix": "spotify/tracks/long_term/",
+    "landing_s3_suffix": ".json",
+    "s3_key_format": "spotify/tracks/long_term/%Y/%m/top_tracks_long_term_%Y%m%d.json"
+  },
+  {
+    "endpoint": "artists/short_term",
+    "landing_s3_prefix": "spotify/artists/short_term/",
+    "landing_s3_suffix": ".json",
+    "s3_key_format": "spotify/artists/short_term/%Y/%m/top_artists_short_term_%Y%m%d.json"
+  },
+  {
+    "endpoint": "artists/medium_term",
+    "landing_s3_prefix": "spotify/artists/medium_term/",
+    "landing_s3_suffix": ".json",
+    "s3_key_format": "spotify/artists/medium_term/%Y/%m/top_artists_medium_term_%Y%m%d.json"
+  },
+  {
+    "endpoint": "artists/long_term",
+    "landing_s3_prefix": "spotify/artists/long_term/",
+    "landing_s3_suffix": ".json",
+    "s3_key_format": "spotify/artists/long_term/%Y/%m/top_artists_long_term_%Y%m%d.json"
   }
 ]

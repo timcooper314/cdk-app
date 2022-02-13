@@ -10,7 +10,7 @@ LOGGER.setLevel(logging.DEBUG)
 
 
 def _get_endpoint_from_key(key):
-    return key.split("/")[1]
+    return "/".join(key.split("/")[1:3])
 
 
 def _create_s3_key(landing_key, s3_key_format):
@@ -20,15 +20,14 @@ def _create_s3_key(landing_key, s3_key_format):
     return datetime_obj.strftime(s3_key_format)
 
 
-def _process_top_data(json_object: dict, processing_details: dict) -> dict:
-    endpoint = processing_details["endpoint"]
+def _process_top_data(json_object: dict, spotify_type: str) -> dict:
     spotify_items = json_object["items"]
     new_json = {}
-    if endpoint == "tracks":
+    if spotify_type == "tracks":
         # TODO: make a dataclass, and display this like {{'artist': , 'track': }, {},...}
         for i, item in enumerate(spotify_items):
             new_json.update({i + 1: {item["name"]: item["artists"][0]["name"]}})
-    elif endpoint == "artists":
+    elif spotify_type == "artists":
         for i, item in enumerate(spotify_items):
             # TODO: store the preprocessing commands in the api configs in ddb
             new_json.update({i + 1: item["name"]})
@@ -80,10 +79,10 @@ class SpotifyDataPreprocessor:
                 )
                 endpoint = _get_endpoint_from_key(landing_s3_key)
                 preprocessing_details = self._get_api_details(endpoint)
+                spotify_type = endpoint.split("/")[0]  # tracks or artists
                 s3_key_format = preprocessing_details["s3_key_format"]
-
                 landing_json = self._get_landing_data(landing_s3_key, landing_bucket)
-                processed_json = _process_top_data(landing_json, preprocessing_details)
+                processed_json = _process_top_data(landing_json, spotify_type)
                 raw_s3_key = _create_s3_key(landing_s3_key, s3_key_format)
                 self._put_to_s3_raw(processed_json, raw_s3_key)
 
