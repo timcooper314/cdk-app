@@ -51,6 +51,7 @@ class ApiIngestionStack(cdk.Stack):
             runtime=lambda_.Runtime.PYTHON_3_8,
             handler="get_api_data.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/"),
+            timeout=cdk.Duration.seconds(20),
             environment=dict(
                 LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
                 API_SECRET_NAME=secret.secret_name,
