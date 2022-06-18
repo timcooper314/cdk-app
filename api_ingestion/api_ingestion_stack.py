@@ -43,7 +43,14 @@ class ApiIngestionStack(cdk.Stack):
         )
 
         secret = secretsmanager.Secret(self, f"{stage}/{component}/auth_token")
-
+        xray_layer = lambda_.LayerVersion(
+            self,
+            "XrayLambdaLayer",
+            layer_version_name=f"{stage}-xray-sdk-layer",
+            code=lambda_.Code.from_asset(
+                "./api_ingestion/xray_sdk_layer/aws_xray_sdk_243.zip"
+            ),
+        )
         api_lambda = lambda_.Function(
             self,
             "get-api-data",
@@ -56,6 +63,8 @@ class ApiIngestionStack(cdk.Stack):
                 LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
                 API_SECRET_NAME=secret.secret_name,
             ),
+            tracing=lambda_.Tracing.ACTIVE,
+            layers=[xray_layer],
         )
         api_lambda_schedule = events.Schedule.cron(
             minute="00", hour="18"
@@ -119,6 +128,8 @@ class ApiIngestionStack(cdk.Stack):
                 RAW_BUCKET_NAME=raw_bucket.bucket_name,
                 API_DETAILS_TABLE=api_details_table.table_name,
             ),
+            tracing=lambda_.Tracing.ACTIVE,
+            layers=[xray_layer],
         )
 
         api_data_preprocessor_lambda.add_event_source(
