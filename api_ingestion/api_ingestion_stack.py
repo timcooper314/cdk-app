@@ -55,6 +55,8 @@ class ApiIngestionStack(Stack):
             code=lambda_.Code.from_asset(
                 "./api_ingestion/xray_sdk_layer/aws_xray_sdk_243.zip"
             ),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
+            compatible_architectures=[lambda_.Architecture.X86_64],
         )
         requests_layer = lambda_.LayerVersion(
             self,
