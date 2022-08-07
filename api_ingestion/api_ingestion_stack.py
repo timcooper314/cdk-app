@@ -63,7 +63,7 @@ class ApiIngestionStack(Stack):
             "RequestsLambdaLayer",
             layer_version_name=f"{stage}-requests-layer",
             code=lambda_.Code.from_asset(
-                "./api_ingestion/requests_layer/requests_layer.zip"
+                "./api_ingestion/requests_layer/requests_2_27_1.zip"
             ),
             compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
             compatible_architectures=[lambda_.Architecture.X86_64],

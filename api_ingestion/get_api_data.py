@@ -6,9 +6,9 @@ from datetime import datetime
 import requests
 import urllib3
 import boto3
-# from aws_xray_sdk.core import patch_all
+from aws_xray_sdk.core import patch_all
 
-# patch_all()
+patch_all()
 
 LOGGER = logging.getLogger("SpotifyApiIngestion")
 LOGGER.setLevel(logging.DEBUG)
