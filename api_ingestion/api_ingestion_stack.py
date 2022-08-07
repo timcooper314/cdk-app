@@ -74,7 +74,7 @@ class ApiIngestionStack(Stack):
             function_name=f"{stage}-{component}-ingestion",
             runtime=lambda_.Runtime.PYTHON_3_8,
             handler="get_api_data.lambda_handler",
-            code=lambda_.Code.from_asset("./api_ingestion/"),
+            code=lambda_.Code.from_asset("./api_ingestion/src/"),
             timeout=Duration.seconds(20),
             environment=dict(
                 LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
@@ -140,7 +140,7 @@ class ApiIngestionStack(Stack):
             function_name=f"{stage}-{component}-preprocessor",
             runtime=lambda_.Runtime.PYTHON_3_8,
             handler="spotify_preprocessor.lambda_handler",
-            code=lambda_.Code.from_asset("./api_ingestion/"),
+            code=lambda_.Code.from_asset("./api_ingestion/src/"),
             environment=dict(
                 RAW_BUCKET_NAME=raw_bucket.bucket_name,
                 API_DETAILS_TABLE=api_details_table.table_name,
