@@ -47,7 +47,7 @@ class ApiIngestionStack(Stack):
             ),
         )
 
-        secret = secretsmanager.Secret(self, f"{stage}/{component}/auth_token")
+        secret = secretsmanager.Secret(self, f"{stage}/{component}/client_secret")
         xray_layer = lambda_.LayerVersion(
             self,
             "XrayLambdaLayer",

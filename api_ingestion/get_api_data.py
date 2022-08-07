@@ -1,12 +1,14 @@
 import os
 import json
 import logging
+import base64
 from datetime import datetime
+import requests
 import urllib3
 import boto3
-from aws_xray_sdk.core import patch_all
+# from aws_xray_sdk.core import patch_all
 
-patch_all()
+# patch_all()
 
 LOGGER = logging.getLogger("SpotifyApiIngestion")
 LOGGER.setLevel(logging.DEBUG)
@@ -22,6 +24,12 @@ def _check_api_response(response):
         raise SpotifyClientAuthTokenExpiredException(response["error"]["message"])
 
 
+def base64_convert_message(message: str) -> str:
+    message_bytes = message.encode("ascii")
+    base64_bytes = base64.b64encode(message_bytes)
+    return base64_bytes.decode("ascii")
+
+
 class SpotifyApiIngestion:
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -32,7 +40,6 @@ class SpotifyApiIngestion:
         self.secret_name = os.getenv("API_SECRET_NAME")
         self.datetime_now = datetime.now().strftime("%Y%m%d")
         self.http = urllib3.PoolManager()
-        self.auth_token = self._get_secret_auth_token()
 
     def _create_s3_key(self, endpoint, time_frame):
         return (
@@ -44,16 +51,36 @@ class SpotifyApiIngestion:
         self.s3_bucket.put_object(Key=s3_key, Body=json.dumps(json_object))
         return
 
-    def _get_secret_auth_token(self):
-        self.logger.debug("Getting auth token from secrets manager...")
+    def _get_client_secret(self) -> dict:
+        self.logger.debug(
+            "Getting API client details and refresh token from secrets manager..."
+        )
         secret_obj = self.secret_manager.get_secret_value(SecretId=self.secret_name)
-        return json.loads(secret_obj["SecretString"])["SPOTIFY_AUTH_TOKEN"]
+        return json.loads(secret_obj["SecretString"])
+
+    def _get_auth_token(self) -> str:
+        self.logger.debug("Retrieving auth token...")
+        client_secrets = self._get_client_secret()
+        client_secret_message = (
+            f"{client_secrets['CLIENT_ID']}:{client_secrets['CLIENT_SECRET']}"
+        )
+        header_content = base64_convert_message(client_secret_message)
+        headers = {"Authorization": f"Basic {header_content}"}
+        refresh_token = client_secrets["REFRESH_TOKEN"]
+        data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+        response = requests.post(
+            "https://accounts.spotify.com/api/token",
+            headers=headers,
+            data=data,
+        )
+        return response.json()["access_token"]
 
     def _get_api_data(self, endpoint, time_range):
         base_url = "https://api.spotify.com/v1/"
         url_endpoint = f"me/top/{endpoint}"
         self.logger.debug(f"Getting API data for {endpoint=}...")
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        auth_token = self._get_auth_token()
+        headers = {"Authorization": f"Bearer {auth_token}"}
         params = {"time_range": time_range, "limit": 50, "offset": 0}
         self.logger.debug(
             f"Fetching API response from {base_url}{url_endpoint} for {time_range=}..."
