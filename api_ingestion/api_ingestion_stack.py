@@ -56,6 +56,16 @@ class ApiIngestionStack(Stack):
                 "./api_ingestion/xray_sdk_layer/aws_xray_sdk_243.zip"
             ),
         )
+        requests_layer = lambda_.LayerVersion(
+            self,
+            "RequestsLambdaLayer",
+            layer_version_name=f"{stage}-requests-layer",
+            code=lambda_.Code.from_asset(
+                "./api_ingestion/requests_layer/requests_layer.zip"
+            ),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
+            compatible_architectures=[lambda_.Architecture.X86_64],
+        )
         api_lambda = lambda_.Function(
             self,
             "get-api-data",
@@ -69,7 +79,7 @@ class ApiIngestionStack(Stack):
                 API_SECRET_NAME=secret.secret_name,
             ),
             tracing=lambda_.Tracing.ACTIVE,
-            layers=[xray_layer],
+            layers=[xray_layer, requests_layer],
         )
         api_lambda_schedule = events.Schedule.cron(
             minute="00", hour="18"
