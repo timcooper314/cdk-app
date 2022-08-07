@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from aws_cdk import core as cdk
+import aws_cdk as cdk
 from api_ingestion.api_ingestion_stack import ApiIngestionStack
 
 STAGE = "dev"

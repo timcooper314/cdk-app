@@ -1,15 +1,20 @@
 import json
 from typing import List
-from aws_cdk import core as cdk
-from aws_cdk import aws_s3 as s3
-from aws_cdk import aws_dynamodb as dynamodb
-from aws_cdk import aws_lambda as lambda_
-from aws_cdk import aws_s3_notifications as s3_nots
-from aws_cdk import aws_events as events
-from aws_cdk import aws_events_targets as events_targets
-from aws_cdk import aws_secretsmanager as secretsmanager
-from aws_cdk import aws_sqs as sqs
-from aws_cdk import aws_lambda_event_sources as lambda_event_sources
+from aws_cdk import (
+    Stack,
+    Duration,
+    CfnOutput,
+    aws_s3 as s3,
+    aws_dynamodb as dynamodb,
+    aws_lambda as lambda_,
+    aws_s3_notifications as s3_nots,
+    aws_events as events,
+    aws_events_targets as events_targets,
+    aws_secretsmanager as secretsmanager,
+    aws_sqs as sqs,
+    aws_lambda_event_sources as lambda_event_sources,
+)
+from constructs import Construct
 
 
 def load_api_config() -> List:
@@ -18,10 +23,10 @@ def load_api_config() -> List:
     return api_config_list
 
 
-class ApiIngestionStack(cdk.Stack):
+class ApiIngestionStack(Stack):
     def __init__(
         self,
-        scope: cdk.Construct,
+        scope: Construct,
         construct_id: str,
         stage: str,
         component: str,
@@ -58,7 +63,7 @@ class ApiIngestionStack(cdk.Stack):
             runtime=lambda_.Runtime.PYTHON_3_8,
             handler="get_api_data.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/"),
-            timeout=cdk.Duration.seconds(20),
+            timeout=Duration.seconds(20),
             environment=dict(
                 LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
                 API_SECRET_NAME=secret.secret_name,
@@ -68,7 +73,7 @@ class ApiIngestionStack(cdk.Stack):
         )
         api_lambda_schedule = events.Schedule.cron(
             minute="00", hour="18"
-        )  # .rate(cdk.Duration.days(2))
+        )  # .rate(Duration.days(2))
         event_lambda_tracks_target = events_targets.LambdaFunction(
             handler=api_lambda,
             event=events.RuleTargetInput.from_object({"endpoint": "tracks"}),
@@ -139,14 +144,14 @@ class ApiIngestionStack(cdk.Stack):
         raw_bucket.grant_write(api_data_preprocessor_lambda)
         api_details_table.grant_read_data(api_data_preprocessor_lambda)
 
-        cdk.CfnOutput(
+        CfnOutput(
             self,
             "dev-api-ingestion-raw-bucket-name",
             value=raw_bucket.bucket_name,
             description="The name of the S3 raw bucket.",
             export_name="dev-api-ingestion-raw-bucket-name",
         )
-        cdk.CfnOutput(
+        CfnOutput(
             self,
             "dev-api-ingestion-raw-bucket-arn",
             value=raw_bucket.bucket_arn,
