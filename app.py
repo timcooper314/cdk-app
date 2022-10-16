@@ -25,7 +25,7 @@ TopDataRecapEmailStack(
     stage=STAGE,
     component="spotify",
     data_bucket_name=api_ingestion_stack.raw_bucket.bucket_name,
-    email_subscriptions=["timcooper314@gmail.com"],
+    sender_email="tim.cooper@thedatafoundry.com.au",
 )
 
 app.synth()

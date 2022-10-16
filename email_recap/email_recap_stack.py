@@ -5,9 +5,8 @@ from aws_cdk import (
     Duration,
     CfnOutput,
     Fn,
-    aws_sns as sns,
     aws_s3 as s3,
-    aws_sns_subscriptions as sns_subscriptions,
+    aws_ses as ses,
     aws_lambda as lambda_,
     aws_iam as iam,
     aws_events as events,
@@ -25,18 +24,16 @@ class TopDataRecapEmailStack(Stack):
         stage: str,
         component: str,
         data_bucket_name: str,
-        email_subscriptions: List[str],
+        sender_email: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        sns_topic = sns.Topic(
+        ses_email_sender_identity = ses.EmailIdentity(
             self,
-            "email-recap-topic",
-            topic_name=f"{stage}-{component}-top-data-email-recap",
+            "SenderIdentity",
+            identity=ses.Identity.email(sender_email),
         )
-        for email_add in email_subscriptions:
-            sns_topic.add_subscription(sns_subscriptions.EmailSubscription(email_add))
 
         send_recap_function = lambda_.Function(
             self,
@@ -48,10 +45,15 @@ class TopDataRecapEmailStack(Stack):
             timeout=Duration.seconds(30),
             environment=dict(
                 SPOTIFY_DATA_BUCKET=data_bucket_name,
-                SNS_TOPIC_ARN=sns_topic.topic_arn,
+                SENDER_EMAIL=sender_email,
             ),
         )
-        sns_topic.grant_publish(send_recap_function)
+        send_recap_function.add_to_role_policy(
+            iam.PolicyStatement(
+                resources=["*"],  # TODO: Make specific to SES identity
+                actions=["ses:SendEmail", "ses:SendRawEmail"],
+            )
+        )
 
         data_bucket = s3.Bucket.from_bucket_name(
             self, "RawDataBucket", data_bucket_name
@@ -71,6 +73,7 @@ class TopDataRecapEmailStack(Stack):
                             "userName": "spotify",  # TODO: Parameterise these later..
                             "topType": "tracks",
                             "timeFrame": "short_term",
+                            "targetEmail": "timcooper314@gmail.com",
                         }
                     ),
                 )
