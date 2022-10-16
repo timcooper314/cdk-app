@@ -105,7 +105,7 @@ class ApiIngestionStack(Stack):
 
         secret.grant_read(api_lambda)
         self.landing_bucket.grant_write(api_lambda)
-        raw_bucket = s3.Bucket(
+        self.raw_bucket = s3.Bucket(
             self,
             "raw-data",
             bucket_name=f"{stage}-{component}-raw-data",
@@ -142,7 +142,7 @@ class ApiIngestionStack(Stack):
             handler="spotify_preprocessor.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/src/"),
             environment=dict(
-                RAW_BUCKET_NAME=raw_bucket.bucket_name,
+                RAW_BUCKET_NAME=self.raw_bucket.bucket_name,
                 API_DETAILS_TABLE=api_details_table.table_name,
             ),
             tracing=lambda_.Tracing.ACTIVE,
@@ -153,20 +153,20 @@ class ApiIngestionStack(Stack):
             lambda_event_sources.SqsEventSource(self.landing_queue)
         )
         self.landing_bucket.grant_read(api_data_preprocessor_lambda)
-        raw_bucket.grant_write(api_data_preprocessor_lambda)
+        self.raw_bucket.grant_write(api_data_preprocessor_lambda)
         api_details_table.grant_read_data(api_data_preprocessor_lambda)
 
         CfnOutput(
             self,
             "dev-api-ingestion-raw-bucket-name",
-            value=raw_bucket.bucket_name,
+            value=self.raw_bucket.bucket_name,
             description="The name of the S3 raw bucket.",
             export_name="dev-api-ingestion-raw-bucket-name",
         )
         CfnOutput(
             self,
             "dev-api-ingestion-raw-bucket-arn",
-            value=raw_bucket.bucket_arn,
+            value=self.raw_bucket.bucket_arn,
             description="The ARN of the S3 raw bucket.",
             export_name="dev-api-ingestion-raw-bucket-arn",
         )
