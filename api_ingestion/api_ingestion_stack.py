@@ -48,31 +48,16 @@ class ApiIngestionStack(Stack):
         )
 
         secret = secretsmanager.Secret(self, f"{stage}/{component}/client_secret")
-        xray_layer = lambda_.LayerVersion(
+        aws_wrangler_layer = lambda_.LayerVersion.from_layer_version_arn(
             self,
-            "XrayLambdaLayer",
-            layer_version_name=f"{stage}-xray-sdk-layer",
-            code=lambda_.Code.from_asset(
-                "./api_ingestion/xray_sdk_layer/aws_xray_sdk_243.zip"
-            ),
-            compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
-            compatible_architectures=[lambda_.Architecture.X86_64],
-        )
-        requests_layer = lambda_.LayerVersion(
-            self,
-            "RequestsLambdaLayer",
-            layer_version_name=f"{stage}-requests-layer",
-            code=lambda_.Code.from_asset(
-                "./api_ingestion/requests_layer/requests_2_27_1.zip"
-            ),
-            compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
-            compatible_architectures=[lambda_.Architecture.X86_64],
+            "AwsWranglerLayer",
+            layer_version_arn="arn:aws:lambda:ap-southeast-2:336392948345:layer:AWSSDKPandas-Python312:8",
         )
         api_lambda = lambda_.Function(
             self,
             "get-api-data",
             function_name=f"{stage}-{component}-ingestion",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="get_api_data.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/src/"),
             timeout=Duration.seconds(20),
@@ -80,8 +65,7 @@ class ApiIngestionStack(Stack):
                 LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
                 API_SECRET_NAME=secret.secret_name,
             ),
-            tracing=lambda_.Tracing.ACTIVE,
-            layers=[xray_layer, requests_layer],
+            layers=[aws_wrangler_layer],
         )
         api_lambda_schedule = events.Schedule.cron(
             minute="00", hour="18"
@@ -138,15 +122,13 @@ class ApiIngestionStack(Stack):
             self,
             "spotify-data-preprocessor",
             function_name=f"{stage}-{component}-preprocessor",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="spotify_preprocessor.lambda_handler",
             code=lambda_.Code.from_asset("./api_ingestion/src/"),
             environment=dict(
                 RAW_BUCKET_NAME=self.raw_bucket.bucket_name,
                 API_DETAILS_TABLE=api_details_table.table_name,
             ),
-            tracing=lambda_.Tracing.ACTIVE,
-            layers=[xray_layer],
         )
 
         api_data_preprocessor_lambda.add_event_source(
