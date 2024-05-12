@@ -27,6 +27,12 @@ class HighRotationPlaylistStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        aws_wrangler_layer = lambda_.LayerVersion.from_layer_version_arn(
+            self,
+            "AwsWranglerLayer",
+            layer_version_arn="arn:aws:lambda:ap-southeast-2:336392948345:layer:AWSSDKPandas-Python310:3",
+        )
+
         update_playlist_function = lambda_.Function(
             self,
             "update-high-rotation-playlist",
@@ -34,6 +40,7 @@ class HighRotationPlaylistStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_10,
             handler="update_high_rotation_playlist.lambda_handler",
             code=lambda_.Code.from_asset("./update_high_rotation_playlist/src/"),
+            layers=[aws_wrangler_layer],
             timeout=Duration.seconds(30),
             environment=dict(
                 SPOTIFY_DATA_BUCKET=landing_bucket_name,
