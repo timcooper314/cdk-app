@@ -39,7 +39,7 @@ class TopDataRecapEmailStack(Stack):
             self,
             "top-data-email-recap",
             function_name=f"{stage}-{component}-top-data-email-recap",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="send_recap_email.lambda_handler",
             code=lambda_.Code.from_asset("./email_recap/src/"),
             timeout=Duration.seconds(30),

@@ -8,6 +8,7 @@ import requests
 import urllib3
 
 SPOTIFY_DATA_BUCKET = os.environ.get("SPOTIFY_DATA_BUCKET", "dev-spotify-landing-data")
+SPOTIFY_API_SECRET = os.environ.get("API_SECRET_NAME", "dev/spotify/client_secret")
 TRACKS_TO_COLLECT = 10
 SPOTIFY_USER_ID = ""
 
@@ -24,7 +25,7 @@ def base64_convert_message(message: str) -> str:
 
 def get_client_secret() -> dict:
     print("Getting API client details and refresh token from secrets manager...")
-    secret_obj = secret_manager.get_secret_value(SecretId=self.secret_name)
+    secret_obj = secret_manager.get_secret_value(SecretId=SPOTIFY_API_SECRET)
     return json.loads(secret_obj["SecretString"])
 
 

@@ -36,6 +36,7 @@ HighRotationPlaylistStack(
     stage=STAGE,
     component="spotify",
     landing_bucket_name="dev-spotify-landing-data",
+    spotify_api_secret_name="dev/spotify/client_secret",
 )
 
 app.synth()

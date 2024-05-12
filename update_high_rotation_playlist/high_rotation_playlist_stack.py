@@ -23,6 +23,7 @@ class HighRotationPlaylistStack(Stack):
         stage: str,
         component: str,
         landing_bucket_name: str,
+        spotify_api_secret_name: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -30,22 +31,24 @@ class HighRotationPlaylistStack(Stack):
         aws_wrangler_layer = lambda_.LayerVersion.from_layer_version_arn(
             self,
             "AwsWranglerLayer",
-            layer_version_arn="arn:aws:lambda:ap-southeast-2:336392948345:layer:AWSSDKPandas-Python310:3",
+            layer_version_arn="arn:aws:lambda:ap-southeast-2:336392948345:layer:AWSSDKPandas-Python312:8",
         )
 
         update_playlist_function = lambda_.Function(
             self,
             "update-high-rotation-playlist",
             function_name=f"{stage}-{component}-update-high-rotation-playlist",
-            runtime=lambda_.Runtime.PYTHON_3_10,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             handler="update_high_rotation_playlist.lambda_handler",
             code=lambda_.Code.from_asset("./update_high_rotation_playlist/src/"),
             layers=[aws_wrangler_layer],
             timeout=Duration.seconds(30),
             environment=dict(
                 SPOTIFY_DATA_BUCKET=landing_bucket_name,
+                API_SECRET_NAME=spotify_api_secret_name,
             ),
         )
+        # add policy to allow secret read
         landing_bucket = s3.Bucket.from_bucket_name(
             self, "LandingDataBucket", landing_bucket_name
         )
