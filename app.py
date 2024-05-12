@@ -3,7 +3,10 @@ import os
 import aws_cdk as cdk
 from api_ingestion.api_ingestion_stack import ApiIngestionStack
 from email_recap.email_recap_stack import TopDataRecapEmailStack
-from update_high_rotation_playlist.high_rotation_playlist_stack import HighRotationPlaylistStack
+from release_radar_email.release_radar_email_stack import ReleaseRadarEmailStack
+from update_high_rotation_playlist.high_rotation_playlist_stack import (
+    HighRotationPlaylistStack,
+)
 
 STAGE = "dev"
 
@@ -27,6 +30,16 @@ TopDataRecapEmailStack(
     component="spotify",
     data_bucket_name=api_ingestion_stack.raw_bucket.bucket_name,
     sender_email="tim.cooper@thedatafoundry.com.au",
+)
+
+ReleaseRadarEmailStack(
+    app,
+    f"{STAGE}-spotify-api-release-radar-email",
+    env=dev,
+    stage=STAGE,
+    component="spotify",
+    sender_email="tim.cooper@thedatafoundry.com.au",
+    spotify_api_secret_name="dev/spotify/client_secret",
 )
 
 HighRotationPlaylistStack(
