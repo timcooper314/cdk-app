@@ -59,7 +59,18 @@ def get_rank_change(previous_rank: str, current_rank: str) -> str:
 def list_s3_objects(s3_prefix: str) -> List:
     print(f"Getting S3 objects in {SPOTIFY_DATA_BUCKET} for {s3_prefix=}...")
     s3_objects = s3_client.list_objects_v2(Bucket=SPOTIFY_DATA_BUCKET, Prefix=s3_prefix)
-    return s3_objects["Contents"]
+    s3_contents = s3_objects["Contents"]
+    next_token = s3_objects["NextContinuationToken"]
+    while next_token:
+        print("Fetching more...")
+        s3_objects = s3_client.list_objects_v2(
+            Bucket=SPOTIFY_DATA_BUCKET, 
+            Prefix=s3_prefix, 
+            NextContinuationToken=next_token
+        )
+        s3_contents.extend(s3_objects["Contents"])
+        next_token = s3_objects["NextContinuationToken"]
+    return s3_contents
 
 
 def get_data_from_s3(s3_key: str) -> dict:
