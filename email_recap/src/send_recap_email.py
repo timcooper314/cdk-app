@@ -66,10 +66,10 @@ def list_s3_objects(s3_prefix: str) -> List:
         s3_objects = s3_client.list_objects_v2(
             Bucket=SPOTIFY_DATA_BUCKET, 
             Prefix=s3_prefix, 
-            NextContinuationToken=next_token
+            ContinuationToken=next_token
         )
         s3_contents.extend(s3_objects["Contents"])
-        next_token = s3_objects["NextContinuationToken"]
+        next_token = s3_objects.get("NextContinuationToken")
     return s3_contents
 
 
