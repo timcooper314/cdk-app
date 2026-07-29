@@ -63,6 +63,7 @@ class ReleaseRadarEmailStack(Stack):
         weekly_lambda_schedule = events.Rule(
             self,
             "send-release-radar-email-schedule",
+            enabled=False,
             rule_name=f"{stage}-{component}-weekly-release-radar-email-schedule",
             schedule=events.Schedule.cron(week_day="THU", hour="21", minute="15"),
             targets=[

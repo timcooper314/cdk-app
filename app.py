@@ -32,6 +32,7 @@ TopDataRecapEmailStack(
     sender_email="tim.cooper@thedatafoundry.com.au",
 )
 
+  # Disabled eventbridge rule since API deprecated for fetching release radar playlist :(
 ReleaseRadarEmailStack(
     app,
     f"{STAGE}-spotify-api-release-radar-email",
