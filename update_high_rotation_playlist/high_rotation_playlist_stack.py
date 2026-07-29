@@ -1,16 +1,10 @@
-import json
-from typing import List
 from aws_cdk import (
     Stack,
     Duration,
-    CfnOutput,
-    Fn,
     aws_s3 as s3,
     aws_lambda as lambda_,
-    aws_iam as iam,
     aws_events as events,
     aws_events_targets as events_targets,
-    aws_lambda_event_sources as lambda_event_sources,
 )
 from constructs import Construct
 

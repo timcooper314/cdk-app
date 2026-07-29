@@ -1,7 +1,6 @@
 import os
 import json
 from typing import List, Dict
-from datetime import datetime
 import boto3
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -64,8 +63,8 @@ def list_s3_objects(s3_prefix: str) -> List:
     while next_token:
         print("Fetching more...")
         s3_objects = s3_client.list_objects_v2(
-            Bucket=SPOTIFY_DATA_BUCKET, 
-            Prefix=s3_prefix, 
+            Bucket=SPOTIFY_DATA_BUCKET,
+            Prefix=s3_prefix,
             ContinuationToken=next_token
         )
         s3_contents.extend(s3_objects["Contents"])

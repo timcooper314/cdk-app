@@ -1,7 +1,6 @@
 import os
 import json
 import base64
-from typing import List, Dict
 from datetime import datetime, timedelta
 import boto3
 import requests

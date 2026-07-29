@@ -2,13 +2,11 @@ import os
 import json
 import base64
 from typing import List, Dict
-from datetime import datetime
 import requests
 import urllib3
 import boto3
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 
 
