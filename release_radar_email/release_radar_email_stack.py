@@ -52,11 +52,11 @@ class ReleaseRadarEmailStack(Stack):
         send_release_radar_email_function.add_to_role_policy(
             iam.PolicyStatement(
                 resources=[
-                    f"arn:aws:secretsmanager:ap-southeast-2:158795226448:secret:{spotify_api_secret_name}*"
+                    f"arn:aws:ssm:ap-southeast-2:158795226448:parameter/{spotify_api_secret_name}*"
                 ],
                 actions=[
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:DescribeSecret",
+                    "ssm:GetParameter",
+                    "ssm:GetParameters",
                 ],
             )
         )

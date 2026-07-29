@@ -12,7 +12,7 @@ TRACKS_TO_COLLECT = 10
 SPOTIFY_USER_ID = ""
 
 s3_client = boto3.client("s3")
-secret_manager = boto3.client("secretsmanager")
+ssm_client = boto3.client("ssm")
 http = urllib3.PoolManager()
 
 
@@ -23,9 +23,9 @@ def base64_convert_message(message: str) -> str:
 
 
 def get_client_secret() -> dict:
-    print("Getting API client details and refresh token from secrets manager...")
-    secret_obj = secret_manager.get_secret_value(SecretId=SPOTIFY_API_SECRET)
-    return json.loads(secret_obj["SecretString"])
+    print("Getting API client details and refresh token from SSM Parameter Store...")
+    param_obj = ssm_client.get_parameter(Name=SPOTIFY_API_SECRET, WithDecryption=True)
+    return json.loads(param_obj["Parameter"]["Value"])
 
 
 def get_auth_token() -> str:

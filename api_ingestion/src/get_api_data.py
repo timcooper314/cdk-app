@@ -34,7 +34,7 @@ class SpotifyApiIngestion:
         self.logger.setLevel(logging.DEBUG)
         self.landing_bucket = os.getenv("LANDING_BUCKET_NAME")
         self.s3_bucket = boto3.resource("s3").Bucket(self.landing_bucket)
-        self.secret_manager = boto3.client("secretsmanager")
+        self.ssm = boto3.client("ssm")
         self.secret_name = os.getenv("API_SECRET_NAME")
         self.datetime_now = datetime.now().strftime("%Y%m%d")
         self.http = urllib3.PoolManager()
@@ -51,10 +51,10 @@ class SpotifyApiIngestion:
 
     def _get_client_secret(self) -> dict:
         self.logger.debug(
-            "Getting API client details and refresh token from secrets manager..."
+            "Getting API client details and refresh token from SSM Parameter Store..."
         )
-        secret_obj = self.secret_manager.get_secret_value(SecretId=self.secret_name)
-        return json.loads(secret_obj["SecretString"])
+        param_obj = self.ssm.get_parameter(Name=self.secret_name, WithDecryption=True)
+        return json.loads(param_obj["Parameter"]["Value"])
 
     def _get_auth_token(self) -> str:
         self.logger.debug("Retrieving auth token...")

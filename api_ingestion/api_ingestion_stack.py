@@ -10,7 +10,7 @@ from aws_cdk import (
     aws_s3_notifications as s3_nots,
     aws_events as events,
     aws_events_targets as events_targets,
-    aws_secretsmanager as secretsmanager,
+    aws_ssm as ssm,
     aws_sqs as sqs,
     aws_lambda_event_sources as lambda_event_sources,
 )
@@ -47,7 +47,13 @@ class ApiIngestionStack(Stack):
             ),
         )
 
-        secret = secretsmanager.Secret(self, f"{stage}/{component}/client_secret")
+        parameter = ssm.StringParameter(
+            self,
+            f"{stage}/{component}/client_secret_param",
+            parameter_name=f"/{stage}/{component}/client_secret",
+            string_value="{}",
+            # parameter_type=ssm.ParameterType.SECURE_STRING,
+        )
         aws_wrangler_layer = lambda_.LayerVersion.from_layer_version_arn(
             self,
             "AwsWranglerLayer",
@@ -63,7 +69,7 @@ class ApiIngestionStack(Stack):
             timeout=Duration.seconds(20),
             environment=dict(
                 LANDING_BUCKET_NAME=self.landing_bucket.bucket_name,
-                API_SECRET_NAME=secret.secret_name,
+                API_SECRET_NAME=parameter.parameter_name,
             ),
             layers=[aws_wrangler_layer],
         )
@@ -87,7 +93,7 @@ class ApiIngestionStack(Stack):
             # TODO: Make a method to create this targets list based on the api configs
         )
 
-        secret.grant_read(api_lambda)
+        parameter.grant_read(api_lambda)
         self.landing_bucket.grant_write(api_lambda)
         self.raw_bucket = s3.Bucket(
             self,

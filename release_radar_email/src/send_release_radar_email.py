@@ -16,7 +16,7 @@ RELEASE_RADAR_PLAYLIST_ID = "37i9dQZEVXbmGsH8kmlJcz"
 
 s3_client = boto3.client("s3")
 ses_client = boto3.client("ses")
-secret_manager = boto3.client("secretsmanager")
+ssm_client = boto3.client("ssm")
 http = urllib3.PoolManager()
 
 
@@ -67,9 +67,9 @@ def send_ses_message(message: MIMEMultipart):
 
 
 def _get_client_secret() -> dict:
-    print("Getting API client details and refresh token from secrets manager...")
-    secret_obj = secret_manager.get_secret_value(SecretId=SECRET_NAME)
-    return json.loads(secret_obj["SecretString"])
+    print("Getting API client details and refresh token from SSM Parameter Store...")
+    param_obj = ssm_client.get_parameter(Name=SECRET_NAME, WithDecryption=True)
+    return json.loads(param_obj["Parameter"]["Value"])
 
 
 def _get_auth_token() -> str:
